@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convert Everything</title>
+    <!-- Tailwind CSS CDN for easy styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- PDF.js library for client-side PDF text extraction -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- jsPDF library for creating PDFs from images -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        // Set the workerSrc for PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        .deep-gradient-background {
+            background: linear-gradient(135deg, #4A00E0, #8E2DE2);
+        }
+    </style>
+</head>
+<body class="deep-gradient-background min-h-screen flex items-center justify-center p-4 text-white">
+
+    <div class="w-full max-w-4xl p-6 md:p-10 bg-gray-900 bg-opacity-70 backdrop-blur-md rounded-3xl shadow-2xl border border-gray-700">
+        <h1 class="text-4xl md:text-5xl font-extrabold text-center mb-6 leading-tight tracking-wide">
+            Convert Anything
+        </h1>
+        <p class="text-lg md:text-xl text-center text-gray-300 mb-10 font-light">
+            Text to Audio, PDF to Text, and more... all in one place.
+        </p>
+
+        <!-- Main Conversion Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <!-- PDF to Text Section -->
+            <div class="bg-gray-800 bg-opacity-80 p-6 rounded-2xl shadow-lg border border-gray-700 transition-transform transform hover:scale-105">
+                <h2 class="text-2xl font-bold mb-4 text-purple-300">PDF to Text</h2>
+                <p class="text-gray-400 mb-4 text-sm">Extract text from any PDF file on your device. It's fast, private, and works offline.</p>
+                <div class="flex flex-col space-y-4">
+                    <input type="file" id="pdfFileInput" accept=".pdf" class="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 cursor-pointer text-sm text-gray-300">
+                    <div id="pdfStatus" class="text-sm font-medium text-red-400">No PDF selected.</div>
+                    <textarea id="pdfOutput" readonly placeholder="Extracted text will appear here..." class="w-full h-40 p-3 rounded-xl bg-gray-900 border border-gray-600 text-gray-100 placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"></textarea>
+                    <button id="copyPdfTextBtn" class="w-full py-2 px-4 bg-purple-600 text-white rounded-full font-semibold shadow-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-colors">
+                        Copy Text
+                    </button>
+                </div>
+            </div>
+
+            <!-- Text to Audio Section -->
+            <div class="bg-gray-800 bg-opacity-80 p-6 rounded-2xl shadow-lg border border-gray-700 transition-transform transform hover:scale-105">
+                <h2 class="text-2xl font-bold mb-4 text-pink-300">Text to Audio</h2>
+                <p class="text-gray-400 mb-4 text-sm">Convert any text you type into a playable audio file. Perfect for listening to notes.</p>
+                <div class="flex flex-col space-y-4">
+                    <textarea id="textInput" placeholder="Enter text to convert to audio..." class="w-full h-40 p-3 rounded-xl bg-gray-900 border border-gray-600 text-gray-100 placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 resize-none"></textarea>
+                    <audio id="audioPlayer" controls class="w-full"></audio>
+                    <button id="textToAudioBtn" class="w-full py-2 px-4 bg-pink-600 text-white rounded-full font-semibold shadow-lg hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-colors">
+                        Convert to Audio
+                    </button>
+                </div>
+            </div>
+
+            <!-- Audio to Text Section -->
+            <div class="bg-gray-800 bg-opacity-80 p-6 rounded-2xl shadow-lg border border-gray-700 transition-transform transform hover:scale-105">
+                <h2 class="text-2xl font-bold mb-4 text-emerald-300">Audio to Text</h2>
+                <p class="text-gray-400 mb-4 text-sm">Select an audio file and play it back instantly. (Audio-to-text conversion is not supported client-side).</p>
+                <div class="flex flex-col space-y-4">
+                    <input type="file" id="audioFileInput" accept="audio/*" class="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer text-sm text-gray-300">
+                    <div id="audio-status" class="text-sm font-medium text-red-400">No audio file selected.</div>
+                    <audio id="audioPlayerFromFile" controls class="w-full"></audio>
+                </div>
+            </div>
+
+            <!-- Image to PDF Section -->
+            <div class="bg-gray-800 bg-opacity-80 p-6 rounded-2xl shadow-lg border border-gray-700 transition-transform transform hover:scale-105">
+                <h2 class="text-2xl font-bold mb-4 text-cyan-300">Image to PDF</h2>
+                <p class="text-gray-400 mb-4 text-sm">Turn any image file into a PDF document for easy sharing and printing.</p>
+                <div class="flex flex-col space-y-4">
+                    <input type="file" id="imageFileInput" accept="image/*" class="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100 cursor-pointer text-sm text-gray-300">
+                    <button id="convertImageBtn" class="w-full py-2 px-4 bg-cyan-600 text-white rounded-full font-semibold shadow-lg hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-colors">
+                        Convert to PDF
+                    </button>
+                    <div id="imageStatus" class="text-sm font-medium text-red-400">No image selected.</div>
+                    <a id="downloadPdfLink" class="hidden w-full py-2 px-4 bg-emerald-600 text-white text-center rounded-full font-semibold shadow-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-colors cursor-pointer" download="converted-image.pdf">
+                        Download PDF
+                    </a>
+                </div>
+            </div>
+
+            <!-- Placeholder for Text to Video (currently not supported client-side) -->
+            <div class="bg-gray-800 bg-opacity-80 p-6 rounded-2xl shadow-lg col-span-1 md:col-span-2 lg:col-span-3 border border-gray-700">
+                <h2 class="text-2xl font-bold mb-4 text-red-300">Text to Video</h2>
+                <div class="text-sm font-medium text-red-400 text-center">
+                    Client-side text-to-video conversion is not currently feasible due to significant resource requirements.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals for messages -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden transition-opacity duration-300 ease-in-out">
+        <div class="bg-gray-900 border border-gray-700 p-6 rounded-xl shadow-2xl text-white max-w-sm w-full transform scale-95 transition-transform duration-300 ease-in-out">
+            <h3 class="text-lg font-bold text-gray-200 mb-2">Message</h3>
+            <p id="modalMessage" class="text-gray-400 text-sm mb-4"></p>
+            <button id="modalCloseBtn" class="w-full py-2 px-4 bg-purple-600 text-white rounded-full font-semibold hover:bg-purple-700 transition-colors">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // Modal functions
+        const modal = document.getElementById('modal');
+        const modalMessage = document.getElementById('modalMessage');
+        const modalCloseBtn = document.getElementById('modalCloseBtn');
+
+        function showMessage(message) {
+            modalMessage.textContent = message;
+            modal.classList.remove('hidden');
+        }
+
+        modalCloseBtn.addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
+
+        // PDF to Text
+        const pdfFileInput = document.getElementById('pdfFileInput');
+        const pdfOutput = document.getElementById('pdfOutput');
+        const pdfStatus = document.getElementById('pdfStatus');
+        const copyPdfTextBtn = document.getElementById('copyPdfTextBtn');
+
+        pdfFileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const typedarray = new Uint8Array(e.target.result);
+                    try {
+                        const loadingTask = pdfjsLib.getDocument(typedarray);
+                        const pdf = await loadingTask.promise;
+                        let fullText = '';
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const textContent = await page.getTextContent();
+                            fullText += textContent.items.map(item => item.str).join(' ');
+                        }
+                        pdfOutput.value = fullText.trim();
+                        pdfStatus.textContent = `PDF file "${file.name}" loaded successfully.`;
+                        pdfStatus.style.color = '#4ade80';
+                    } catch (error) {
+                        pdfStatus.textContent = `Error: Could not read PDF file.`;
+                        pdfStatus.style.color = '#f87171';
+                        console.error('Error reading PDF:', error);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                pdfOutput.value = '';
+                pdfStatus.textContent = 'No PDF selected.';
+                pdfStatus.style.color = '#f87171';
+            }
+        });
+
+        copyPdfTextBtn.addEventListener('click', () => {
+            if (pdfOutput.value.length > 0) {
+                try {
+                    const tempInput = document.createElement('textarea');
+                    tempInput.value = pdfOutput.value;
+                    document.body.appendChild(tempInput);
+                    tempInput.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(tempInput);
+                    showMessage('Text copied to clipboard!');
+                } catch (err) {
+                    showMessage('Failed to copy text. Your browser may not support this feature.');
+                    console.error('Copy to clipboard failed:', err);
+                }
+            } else {
+                showMessage('No text to copy.');
+            }
+        });
+
+        // Text to Audio
+        const textInput = document.getElementById('textInput');
+        const textToAudioBtn = document.getElementById('textToAudioBtn');
+        const audioPlayer = document.getElementById('audioPlayer');
+
+        textToAudioBtn.addEventListener('click', () => {
+            const textToSpeak = textInput.value;
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(textToSpeak);
+                utterance.lang = 'en-US';
+                window.speechSynthesis.speak(utterance);
+            } else {
+                showMessage('Text-to-speech is not supported in your browser.');
+            }
+        });
+
+        // Audio to Audio Player
+        const audioFileInput = document.getElementById('audioFileInput');
+        const audioPlayerFromFile = document.getElementById('audioPlayerFromFile');
+        const audioStatus = document.getElementById('audio-status');
+
+        audioFileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                audioPlayerFromFile.src = url;
+                audioStatus.textContent = `Audio file "${file.name}" loaded successfully.`;
+                audioStatus.style.color = '#4ade80';
+            } else {
+                audioPlayerFromFile.src = '';
+                audioStatus.textContent = 'No audio file selected.';
+                audioStatus.style.color = '#f87171';
+            }
+        });
+        
+        // Image to PDF
+        const { jsPDF } = window.jspdf;
+        const imageFileInput = document.getElementById('imageFileInput');
+        const convertImageBtn = document.getElementById('convertImageBtn');
+        const imageStatus = document.getElementById('imageStatus');
+        const downloadPdfLink = document.getElementById('downloadPdfLink');
+        let selectedImage = null;
+
+        imageFileInput.addEventListener('change', (event) => {
+            selectedImage = event.target.files[0];
+            if (selectedImage) {
+                imageStatus.textContent = `Image file "${selectedImage.name}" selected.`;
+                imageStatus.style.color = '#4ade80';
+            } else {
+                imageStatus.textContent = 'No image selected.';
+                imageStatus.style.color = '#f87171';
+            }
+        });
+
+        convertImageBtn.addEventListener('click', () => {
+            if (!selectedImage) {
+                showMessage("Please select an image file first.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const doc = new jsPDF();
+                    const pageWidth = doc.internal.pageSize.getWidth();
+                    const pageHeight = doc.internal.pageSize.getHeight();
+                    const imgWidth = img.width;
+                    const imgHeight = img.height;
+                    const ratio = Math.min(pageWidth / imgWidth, pageHeight / imgHeight);
+
+                    const finalWidth = imgWidth * ratio;
+                    const finalHeight = imgHeight * ratio;
+
+                    doc.addImage(img, 'JPEG', (pageWidth - finalWidth) / 2, (pageHeight - finalHeight) / 2, finalWidth, finalHeight);
+
+                    const pdfData = doc.output('blob');
+                    const url = URL.createObjectURL(pdfData);
+                    downloadPdfLink.href = url;
+                    downloadPdfLink.classList.remove('hidden');
+                    imageStatus.textContent = 'Image converted to PDF successfully!';
+                    imageStatus.style.color = '#4ade80';
+                };
+            };
+            reader.readAsDataURL(selectedImage);
+        });
+    </script>
+</body>
+</html>
